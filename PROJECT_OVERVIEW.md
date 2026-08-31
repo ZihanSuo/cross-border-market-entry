@@ -2,7 +2,7 @@
 
 给中国品牌做跨境进入研究的多 Agent 流水线：输入 brief，输出可行性 / 缺口补证 / 开拓路径 / 竞品分析。另一半重心是**不依赖模型自评的产出校验**——提示词里的硬规则，模型经常不遵守，所以用代码当裁判。
 
-技术细节：[`docs/system_design.md`](docs/system_design.md)。发现与对照实验：[`docs/storyline.md`](docs/storyline.md)。怎么跑：[`README.md`](README.md)。
+技术细节：[`docs/system_design.md`](docs/system_design.md)。发现与对照实验：[`docs/findings.md`](docs/findings.md)。怎么跑：[`README.md`](README.md)。
 
 ---
 

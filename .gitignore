@@ -27,3 +27,12 @@ __pycache__/
 # 实测积累到 9 个、全部是已归档版本的逐字节重复，只会污染统计口径与 git 历史。
 # 正式归档一律进 outputs/<品牌>/<版本>/，临时快照不进库。
 outputs/_pre_*/
+
+# 求职材料不进公开仓库：面试台词本、针对具体公司的叙事、个人待办。
+# 它们的内容价值已经以第三人称形式沉淀在 docs/findings.md 里。
+# 曾经踩过：docs/interview_one_pager.md（「今晚可直接念」）被推到了公开仓库。
+docs/storyline.md
+docs/interview_one_pager.md
+jd/
+todo*.md
+SECURITY_TODO.md

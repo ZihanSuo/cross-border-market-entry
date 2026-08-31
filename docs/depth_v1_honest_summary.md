@@ -2,7 +2,7 @@
 
 > **一句话**：Depth 提高了「能不能被代码拦住」的可控性，**没有**产出可直接交付的咨询级深度包。面试主推仍是 Workflow + 评测闸 + agentic 失败对照；Depth 是实验分支，不是第三份 demo。
 
-设计与结论写在 [`docs/storyline.md`](storyline.md) 发现七；实现见 `src/marketing_crew/artifact_check.py`、`research_depth_check.py`。
+设计与结论写在 [`docs/findings.md`](findings.md) 发现七；实现见 `src/marketing_crew/artifact_check.py`、`research_depth_check.py`。
 
 ---
 
@@ -71,7 +71,7 @@
 
 > 后来我加了一层 Depth：不是让 Agent 更自由，而是给报告加机械证据地板。流水线能跑通，但带 soft-pass 横幅的输出我明确不当成品。真正改变结论行为的，还是更早那次——给评分锚点之后，石头科技德国案第一次算出 3.15、说了「先别进」。
 
-更长版本见 `docs/storyline.md` 发现七。
+更长版本见 `docs/findings.md` 发现七。
 
 ---
 

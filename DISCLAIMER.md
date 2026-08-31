@@ -24,7 +24,7 @@
 | **加权总分算错** | 31 份带评分表的报告中 **19 份**把自己的五维加权总分算错或与结论矛盾 | `src/marketing_crew/scoring_check.py` |
 | **伪造过程描述** | 补证环节报告写「检索策略：搜索 xxx」，但工具审计显示该 agent **0 次调用** | `outputs/石头科技/v1/CHANGELOG.md` |
 | **伪造核实记录** | agentic 实验版写 10 条「已用工具核实，页面显示标价 £XX」，逐条对质**通过 0 条** | `docs/experiments.md` 实验三 |
-| **模板硬编码** | 早期版本把「英国」写死成字段名，导致泰国报告在讨论英国市场份额 | `docs/storyline.md` 发现一 |
+| **模板硬编码** | 早期版本把「英国」写死成字段名，导致泰国报告在讨论英国市场份额 | `docs/findings.md` 发现一 |
 
 完整清单见各版本目录下的 `CHANGELOG.md`与 `docs/experiments.md`。
 
@@ -58,7 +58,7 @@ Bosch、Siemens、Miele、AEG 等真实企业。请注意：
 | `experiments/qa_bench.py` | QA 环节召回率 benchmark（18 条人工标注问题） |
 | `experiments/rule_compliance_matrix.py` | 33 个归档版本 × 18 类检测的横向矩阵 |
 | `tests/` | **给检验工具本身写的 60 个回归测试** |
-| `docs/storyline.md` | 七个核心发现的完整推导过程 |
+| `docs/findings.md` | 七个核心发现的完整推导过程 |
 
 最后一项尤其值得看：这个项目里真实发生过两次「尺子本身是错的」——
 校验工具漏检导致基线被记成 5 处（真实 15 处）、benchmark 用品牌名当匹配键
