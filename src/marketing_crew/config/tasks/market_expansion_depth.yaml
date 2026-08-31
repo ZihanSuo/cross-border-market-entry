@@ -1,0 +1,35 @@
+name: market_expansion_depth_task
+agent: market_researcher_expansion
+output_file: outputs/market_expansion.md
+context:
+  - market_feasibility_depth_task
+  - evidence_gap_fill_depth_task
+include_global_knowledge: false
+knowledge_mode: registry
+description: |
+  基于上游**Depth 可行性 + 缺口补证**做开拓路径研究。
+
+  {brief}
+
+  ## Depth V1
+
+  正文自由组织；**不要**为了篇幅堆渠道套话。
+  路径语气服从上游结论；发现与上游冲突的带 URL 事实 → 记入「与上游的分歧」，不擅自推翻。
+  优先引用补证里「可引用的新证据」；仍不足的命题禁止升级。
+
+  ## 硬规则摘要
+
+  - 上游暂缓/暂不建议 → 禁止进军语气；改为条件路径选项。
+  - 禁止法务/任命本地代理当主路径理由。
+  - 平台首页不得支撑「高」置信度。
+  - 引用 brief ≥2 条品牌事实。
+  - 禁止 TBD；目标市场名与 brief 一致。
+expected_output: |
+  ## 承接上游结论
+  ## 与上游的分歧（或写未发现）
+  ## 路径对比与取舍（随证据写透；勿灌水）
+  ## 获客与信任 / 定位本地化 / 分阶段节奏 / 风险
+  ## 建议进一步研究
+  ## 参考文献
+
+  若本步新增了可核对 URL，可附简短「硬证据清单」；不是强制地板。

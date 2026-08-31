@@ -1,0 +1,35 @@
+name: channel_strategy_task
+agent: content_strategist
+description: |
+  【未来拓展方向，V1 不在默认流水线里，只能通过 --tasks channel_strategy_task 显式调用】
+
+  基于市场研究与竞品分析，制定"内容+渠道"联合策略。
+  项目简报：
+  {brief}
+
+  ## 渠道选型硬规则（先判断，再写策略，不要想当然）
+
+  这个知识库里同时有面向中国境内用户的规则（`xiaohongshu_rules.md`、`douyin_performance_rules.md`）
+  和面向海外目标市场用户的规则（`tiktok_rules.md`、`instagram_rules.md`、`reddit_rules.md`），
+  两套渠道服务的是完全不同的人群，**必须先看 brief 里的 `market_scope` 和 `target_audience`
+  判断目标受众是境内用户还是目标市场（如英国）本地用户，再决定用哪一套**：
+
+  - 若目标受众是境内用户（比如反向引进/跨境电商触达中国消费者）→ 用小红书 + 抖音，
+    下游对应 `xhs_content_task` / `douyin_plan_task`。
+  - 若目标受众是目标市场本地用户（本项目最常见场景，比如 brief 示例里"25-40 岁英国都市女性"）
+    → 用 TikTok + Instagram 为主，Reddit 仅作为口碑/社区研究信源（不是内容生产渠道，
+    理由见 `reddit_rules.md`），下游对应 `tiktok_content_task` / `instagram_content_task`。
+  - 禁止不加判断地默认用小红书/抖音——这是历史遗留的境内内容链路配置，不代表适合当前 brief。
+
+  输出包含：目标人群分层、核心信息框架、渠道优先级（并说明为什么是这一套渠道，不是另一套）、
+  内容节奏、关键指标建议。
+expected_output: |
+  一份可执行渠道策略文档，开头必须先写一句"目标受众判定：境内用户 / 目标市场（brief 里的
+  market_scope）本地用户"并说明依据，再给出对应渠道组合的协同逻辑（小红书+抖音，或
+  TikTok+Instagram+Reddit 研究信源），不得同时给两套互相矛盾的渠道建议。
+output_file: outputs/channel_strategy.md
+context:
+  - market_feasibility_task
+  - market_expansion_task
+  - competitor_analysis_task
+include_global_knowledge: true

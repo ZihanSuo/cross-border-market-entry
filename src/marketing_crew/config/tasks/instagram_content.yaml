@@ -1,0 +1,29 @@
+name: instagram_content_task
+agent: instagram_content_strategist
+description: |
+  【未来拓展方向，V1 不在默认流水线里，只能通过 --tasks instagram_content_task 显式调用】
+
+  用户简报：
+  {brief}
+
+  根据渠道策略，产出面向目标市场（brief 里的 market_scope，例如英国）本地用户的
+  Instagram 内容包，**不是**面向中国境内用户的小红书内容——如果 brief 的
+  target_audience 描述的是境内用户，这个 task 不适用，应该用 `xhs_content_task`。
+
+  产出：
+  1) 5 条 Reels 钩子候选（3 秒内的开头文案/画面构想）
+  2) 3 篇图文轮播（Carousel）大纲，适合讲成分/工艺/品牌故事这类需要"讲清楚"的内容
+  3) 达人合作策略层建议（纳米/微型达人分层逻辑，不给具体达人名单和报价——按项目硬规则，
+     执行层达人采买不在输出范围内）
+  4) 合规风险提示（该目标市场对"Paid Partnership"标签、可持续/环保宣称的要求；
+     具体规则以 `knowledge/markets/*.md` 或检索结果为准，不确定则标"需本地合规复核"）
+  5) 明确哪些说法需要事实验证
+expected_output: |
+  一份 Instagram 内容产出包，可直接作为创作初稿，开头必须明确标注本方案面向 brief 中
+  market_scope 所在的目标市场本地用户，不是国内小红书内容。
+output_file: outputs/instagram_content_pack.md
+context:
+  - channel_strategy_task
+include_global_knowledge: false
+knowledge_files:
+  - instagram_rules.md

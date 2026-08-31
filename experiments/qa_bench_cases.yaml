@@ -1,0 +1,158 @@
+# QA 审校环节的测试集（ground truth）
+#
+# 每个 case = 一个已归档的输出版本 + 一份「人工确认过确实存在」的问题清单。
+# 用途：把 QA 喂给这些固定输入，看它能抓到几条，算召回率。
+#
+# 标注原则：
+# 1. 只收录**人工回查确认过**的问题，不收录"我觉得可能有问题"的
+# 2. 每条标注写清 evidence（原文片段）和 how_verified（怎么确认的），
+#    以后回看能复核这条标注本身对不对
+# 3. `detectable_by` 标明这条问题理论上该由谁抓到：
+#    - tool    = 机械校验能抓（用来验证工具没退化）
+#    - qa      = 只有语义判断能抓（这才是 QA 的价值所在）
+#    - neither = 两者都抓不到，需要人工或外部工具（记录在案，用于说明覆盖边界）
+# 4. 一条问题可以同时被 tool 和 qa 抓到，此时写 both
+
+version: 1
+
+cases:
+  - id: herbeast_v3
+    dir: outputs/东边野兽/backup_v3
+    market: 英国
+    locale: uk
+    note: 最早暴露"模型会编造引用"的版本，用于验证最基础的检测没有退化
+    known_issues:
+      - id: v3-fake-domain
+        type: 假域名
+        detectable_by: both
+        evidence: "market_expansion.md 里 4 处 https://www.example.com，且标注为 A 级证据"
+        how_verified: 人工通读 + citation_check 扫描双重确认
+      - id: v3-unfilled-template
+        type: 未填模板占位符
+        detectable_by: both
+        evidence: "market_feasibility.md 参考文献表结尾残留 `N/A | N/A` 模板行"
+        how_verified: 人工通读 + citation_check 扫描双重确认
+      - id: v3-statista-homepage
+        type: 研究机构首页当证据
+        detectable_by: both
+        evidence: "用 statista.com 首页支撑「营收超 10 亿英镑」并标高置信度"
+        how_verified: 人工回查 source_rules.md 硬规则
+
+  - id: herbeast_v8
+    dir: outputs/东边野兽/backup_v8
+    market: 英国
+    locale: uk
+    note: QA 首次跑出高质量输出的版本；这里标注的是 QA 当时**确实抓到**的，用于回归
+    known_issues:
+      - id: v8-truebotanicals-homepage
+        type: 裸域名首页当证据
+        detectable_by: both
+        evidence: "品类可见度一节用 [True Botanicals](https://truebotanicals.com/) 支撑「可见度高」"
+        how_verified: QA 首先发现；人工回查原文确认；随后补了工具检测也能抓到
+        history: 发现当时机械校验漏掉（上下文无「依据」字样也不在表格里），据此改进了工具
+      - id: v8-ravenbotanicals-homepage
+        type: 裸域名首页当证据
+        detectable_by: both
+        evidence: "同上，[Raven Botanicals](https://ravenbotanicals.com/)"
+        how_verified: 同上
+      - id: v8-biorius-authority
+        type: 证据级别不当（非官方源当 A 级）
+        detectable_by: qa
+        evidence: "进入门槛清单用 biorius.com（第三方合规咨询公司）作为 UK REACH 的 A 级依据"
+        how_verified: QA 指出应换 gov.uk 官方页面；人工认可该判断
+        note: 机械校验目前没有「来源权威性是否配得上证据级别」这个维度
+      - id: v8-absolute-wording
+        type: 绝对化用词
+        detectable_by: qa
+        evidence: "Battlecard·Aesop 写「消费者评价极高」"
+        how_verified: QA 指出；对照 market_feasibility.yaml 规则 24「禁止绝对化词」确认
+      - id: v8-nealsyard-intl-site
+        type: 国际站冒充本地站
+        detectable_by: tool
+        evidence: "nealsyardremedies.com/frankincense-hydrating-cream-50g 标 £55 但非 .co.uk 站"
+        how_verified: 机械校验抓到；QA 判为「正常」漏掉
+      - id: v8-pai-intl-site
+        type: 国际站冒充本地站
+        detectable_by: tool
+        evidence: "paiskincare.com/products/chamomile-rosehip-calming-day-cream 标 £38 但非 .co.uk 站"
+        how_verified: 同上
+      - id: v8-aesop-body-path
+        type: URL 路径与产品品类矛盾
+        detectable_by: neither
+        evidence: "`/body/` 路径段与产品名 Facial Cream（面部）矛盾；且 `parley` 疑似拼错（应为 parsley）。完整 URL：aesop.com/uk/p/body/parley-seed-facial-hydrating-cream/"
+        how_verified: 人工检查 URL 结构发现
+        history: 该疑点在 v4.1、v7、v8 三个版本反复出现，QA 每次都判「正常」，机械校验不覆盖
+        open_question: 需要真的打开网页才能确认是不是幻觉——这是三层检查共同的覆盖边界
+        # 这条的评分踩了两次坑，都记下来：
+        # 坑一：自动抽取会把 aesop.com 当匹配键，而 QA 在逐 URL 核查表里必然
+        #       会提到这个域名（哪怕它把这条判成"正常"）→ 假阳性。
+        # 坑二：改用 `/body/`、`parley` 之后仍然假阳性，因为这两个片段**本身
+        #       就在 URL 里**，QA 只要引用了这条 URL 就会匹配上。
+        #       引用 URL ≠ 指出问题。
+        # 解法：match_in_prose_only 会先把 URL 整体挖掉再匹配，
+        #       只有 QA 在正文里真的讨论了 /body/ 或拼写问题才算命中。
+        match_keys:
+          - "/body/"
+          - "parley"
+          - "品类矛盾"
+          - "拼写"
+        match_in_prose_only: true
+
+  - id: flowerknows_v2
+    dir: outputs/花知晓/v2
+    market: 泰国
+    locale: th
+    note: 最有价值的一个 case —— 同时包含"只有 QA 能抓"和"只有工具能抓"的问题，且两者在同一件事上给出过相反判断
+    known_issues:
+      - id: fk2-overclaim-thailand
+        type: 过度推断（brief 中不存在的事实）
+        detectable_by: qa
+        evidence: "market_feasibility.md 写「表明已按计划扩展至泰国市场」，但 brief 只说国际化是 major focus、泰国在布局名单里，从未说已扩展"
+        how_verified: QA 在「与 brief 不符」栏抓到；人工回查 briefs/flowerknows_thailand.json 原文确认
+        note: 这条最能体现 QA 价值——句子有 URL、格式完美，唯一问题是从证据到结论多跨一步
+      - id: fk2-unsourced-number-mistine
+        type: 无来源数字（兜底措辞不豁免）
+        detectable_by: tool
+        evidence: "Mistine 市场份额写「约 25%（证据不足）」，给了具体百分比却无任何来源"
+        how_verified: 机械校验抓到；**QA 判为「已写证据不足」合规——判错了**
+        note: QA 看到「证据不足」四个字就通过，没注意前面挂着数字。据此加了规则 7.5
+      - id: fk2-unsourced-number-cathydoll
+        type: 无来源数字（兜底措辞不豁免）
+        detectable_by: tool
+        evidence: "Cathy Doll 市场份额写「约 18%（证据不足）」"
+        how_verified: 同上
+      - id: fk2-unsourced-number-srichand
+        type: 无来源数字（兜底措辞不豁免）
+        detectable_by: tool
+        evidence: "Srichand 市场份额写「约 15%（证据不足）」"
+        how_verified: 同上
+      - id: fk2-social-profile-mistine
+        type: 社媒账号页当舆论证据
+        detectable_by: both
+        evidence: "Mistine 公开舆论引用 facebook.com/mistine（品牌自营账号主页）"
+        how_verified: QA 在「逐 URL 核查表」抓到（判不通过）但在「反向核查栏」又放过（判有 URL 合规）——同一 URL 两张表判定相反；后补了工具检测
+      - id: fk2-social-profile-cathydoll
+        type: 社媒账号页当舆论证据
+        detectable_by: both
+        evidence: "Cathy Doll 公开舆论引用 instagram.com/cathydolland"
+        how_verified: 同上
+      - id: fk2-social-profile-srichand
+        type: 社媒账号页当舆论证据
+        detectable_by: both
+        evidence: "Srichand 公开舆论引用 twitter.com/srichand"
+        how_verified: 同上
+      - id: fk2-srichand-homepage-as-product
+        type: 品牌首页当商品页
+        detectable_by: both
+        evidence: "Srichand 商品页 URL 是 srichand.com/ 裸域名首页，却标了 ฿150 具体标价"
+        how_verified: 机械校验与 QA 都抓到
+
+# ---------------------------------------------------------------------------
+# 已知的标注局限（诚实记录，避免把这份测试集当成完备的 ground truth）
+#
+# 1. 这份清单只包含**已经被发现**的问题。任何一版报告里都可能还有没被任何人
+#    发现的问题——召回率是相对这份清单算的，不是相对"全部真实问题"。
+# 2. detectable_by 的判定基于**当前**的工具版本。工具改了之后要回来复核。
+# 3. v8 与花知晓 v2 的标注里，很多条是 QA 自己发现的——用它们评 QA 会偏乐观。
+#    评估时应关注 detectable_by=tool 的那几条（QA 曾经漏掉的），那才是真考验。
+# ---------------------------------------------------------------------------

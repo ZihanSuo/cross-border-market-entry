@@ -1,0 +1,29 @@
+# 虚拟环境（体积大，且每台机器应该自己装，不用进版本库）
+.venv/
+venv/
+env/
+
+# Python 编译缓存
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# 密钥/环境变量（.env.example 保留作模板，.env 本身绝不进库）
+# 只写 `.env` 挡不住 `.env.bak` / `.env.local` 这类变体。
+.env
+.env.*
+!.env.example
+
+# 系统文件
+.DS_Store
+
+# 编辑器
+.idea/
+.vscode/
+
+# 跑 Depth/对照实验前自动生成的临时快照目录。
+# 实测积累到 9 个、全部是已归档版本的逐字节重复，只会污染统计口径与 git 历史。
+# 正式归档一律进 outputs/<品牌>/<版本>/，临时快照不进库。
+outputs/_pre_*/

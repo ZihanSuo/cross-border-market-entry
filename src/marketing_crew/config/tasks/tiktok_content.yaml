@@ -1,0 +1,27 @@
+name: tiktok_content_task
+agent: tiktok_content_planner
+description: |
+  【未来拓展方向，V1 不在默认流水线里，只能通过 --tasks tiktok_content_task 显式调用】
+
+  用户简报：
+  {brief}
+
+  根据渠道策略，产出面向目标市场（brief 里的 market_scope，例如英国）本地用户的
+  TikTok 内容与投流联动方案，**不是**面向中国境内用户的抖音内容——如果 brief 的
+  target_audience 描述的是境内用户，这个 task 不适用，应该用 `douyin_plan_task`。
+
+  产出：
+  1) 3 个短视频脚本方向（3 秒钩子 + 核心信息 + 行动引导）
+  2) 投流建议（人群定向思路、预算测试节奏——只给区间和前提假设，不编造具体数字）
+  3) 合规风险提示（该目标市场的广告披露要求，例如英国 ASA/CAP Code 对 Paid Partnership 标签的要求；
+     具体规则以 `knowledge/markets/*.md` 或检索结果为准，不确定则标"需本地合规复核"）
+  4) 明确哪些说法需要事实验证
+expected_output: |
+  一份 TikTok 内容与投流建议方案，强调"先小样本测试再放量"，开头必须明确标注本方案
+  面向 brief 中 market_scope 所在的目标市场本地用户，不是国内抖音内容。
+output_file: outputs/tiktok_content_pack.md
+context:
+  - channel_strategy_task
+include_global_knowledge: false
+knowledge_files:
+  - tiktok_rules.md

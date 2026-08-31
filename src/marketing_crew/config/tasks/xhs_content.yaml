@@ -1,0 +1,16 @@
+name: xhs_content_task
+agent: xhs_copywriter
+description: |
+  根据渠道策略，产出小红书内容包：
+  1) 5 条标题候选
+  2) 3 篇笔记大纲（含开头钩子、主体结构、CTA）
+  3) 标签建议和发布节奏建议
+  4) 明确哪些说法需要事实验证
+expected_output: |
+  一份小红书内容产出包，可直接作为创作初稿。
+output_file: outputs/xhs_content_pack.md
+context:
+  - channel_strategy_task
+include_global_knowledge: false
+knowledge_files:
+  - xiaohongshu_rules.md

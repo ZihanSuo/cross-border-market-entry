@@ -1,0 +1,19 @@
+# Task pipeline manifest.
+# Each task body lives in config/tasks/<task_name>.yaml
+# Optional long role prompts live in config/prompts/*.md
+
+task_order:
+  - market_feasibility_task
+  - evidence_gap_fill_task
+  - market_expansion_task
+  - competitor_analysis_task
+  - channel_strategy_task
+  - xhs_content_task
+  - douyin_plan_task
+  - qa_review_task
+
+# Inline overrides (optional). Example:
+# tasks:
+#   market_feasibility_task:
+#     description: |
+#       临时覆盖某次实验的额外规则...

@@ -1,0 +1,133 @@
+version: 2
+
+# ============================================================================
+# 目标市场 → 知识包 + 引用校验地区码 的**唯一**映射表
+#
+# ## 为什么合并成一张表（v2 的唯一改动）
+#
+# v1 时这件事分散在两处：这个文件决定「加载哪个市场知识包」，
+# `crew.py` 里另有一份 `_SCOPE_TO_LOCALE` 决定「按哪个地区做引用校验」。
+# 两份手维护的表必然漂移，实测已经漂了：
+#
+#   日本 / 新加坡 / 马来西亚  → 有地区码，但没有知识包
+#   东南亚                   → 有知识包，但没有地区码（引用校验被整个跳过）
+#   德国                     → 曾经只在这里有，crew.py 里漏了
+#
+# 最后那条造成了真实后果：石头科技那一整轮跑下来，
+# 「他国站点当本地商品页」这项检测**从头到尾没有执行过**，而且没有任何提示。
+# 「没报错」被误当成了「查过了没问题」。
+#
+# 所以现在只保留这一张表，`locale` 写在这里，代码从这里读。
+# 想加一个市场，只改这个文件；漏填 locale 会在跑之前被显式警告。
+#
+# ## 字段说明
+#
+#   match  : 匹配词列表。**长度 ≤3 的纯拉丁词按「词」匹配，其余按子串匹配。**
+#            这是必须的——子串匹配下 `th` 会命中 South Africa / Netherlands /
+#            North America / Ethiopia / Lithuania，`uk` 会命中 Ukraine，
+#            `sea` 会命中 Seattle。它们会安静地加载错误的市场知识包，
+#            让一份荷兰报告引用泰国 FDA 备案制度，且全程不报错。
+#   locale : 引用校验用的地区码，供「他国站点当本地商品页」检测使用。
+#            留空表示该市场暂不做地区一致性检查（会在运行时提示）。
+#   files  : 该市场的知识包。留空表示沿用 default_market_files，
+#            但 locale 仍然生效——用于「有地区码、还没写知识包」的市场。
+# ============================================================================
+
+core_files:
+  - core/source_rules.md
+  - core/competitor_schema.md
+
+market_mappings:
+  # ---- 有完整知识包的市场（三个已验证案例）----
+  - match: ["uk", "britain", "british", "英国", "unitedkingdom", "england"]
+    locale: uk
+    files:
+      - markets/uk.md
+  - match: ["thailand", "泰国", "th"]
+    locale: th
+    files:
+      - markets/thailand.md
+  # 德国 = 欧盟通用包 + 德国国别包。
+  # `files` 是列表且按顺序加载，所以「共享 + 国别」这个模式不需要改任何代码。
+  # 顺序有意义：通用在前、国别在后，国别包里可以针对性地补充或强调。
+  - match: ["germany", "德国", "deutschland"]
+    locale: de
+    files:
+      - markets/eu_common.md
+      - markets/germany.md
+  - match: ["vietnam", "越南", "vn"]
+    locale: vn
+    files:
+      - markets/vietnam.md
+
+  # ---- 欧盟其余 26 国：暂无国别包，但至少拿到欧盟通用框架 ----
+  #
+  # 为什么值得逐国列出：欧盟层面的 CE / CPNP / 能效标签 / GPSR / GDPR 对所有成员国一致，
+  # 这部分知识**不该因为「还没写法国包」就完全拿不到**。
+  # 有欧盟通用包 ≫ 只有 8 行的默认包。
+  #
+  # 为什么不用一条正则或一个 region 字段兜住 27 国：因为**每国需要各自的 locale**，
+  # 否则「他国站点当本地商品页」检测会失效（拿法国 locale 去查意大利站点会误判）。
+  # 列表长一点，换来的是每个市场都有正确的地区码。
+  #
+  # 边界必须清楚：语言标签、EPR/回收注册、VAT、主流电商、权威测评机构**逐国不同**，
+  # `eu_common.md` 里明确写了这些必须分国检索。
+  # 所以这些市场跑起来仍会提示「只有区域包、无国别包」，不假装覆盖完整。
+  - { match: ["france", "法国"],       locale: fr, files: [markets/eu_common.md] }
+  - { match: ["italy", "意大利"],       locale: it, files: [markets/eu_common.md] }
+  - { match: ["spain", "西班牙"],       locale: es, files: [markets/eu_common.md] }
+  - { match: ["netherlands", "荷兰"],  locale: nl, files: [markets/eu_common.md] }
+  - { match: ["poland", "波兰"],       locale: pl, files: [markets/eu_common.md] }
+  - { match: ["sweden", "瑞典"],       locale: se, files: [markets/eu_common.md] }
+  - { match: ["belgium", "比利时"],     locale: be, files: [markets/eu_common.md] }
+  - { match: ["austria", "奥地利"],     locale: at, files: [markets/eu_common.md] }
+  - { match: ["denmark", "丹麦"],      locale: dk, files: [markets/eu_common.md] }
+  - { match: ["finland", "芬兰"],      locale: fi, files: [markets/eu_common.md] }
+  - { match: ["ireland", "爱尔兰"],     locale: ie, files: [markets/eu_common.md] }
+  - { match: ["portugal", "葡萄牙"],    locale: pt, files: [markets/eu_common.md] }
+  - { match: ["greece", "希腊"],       locale: gr, files: [markets/eu_common.md] }
+  - { match: ["czech", "捷克"],        locale: cz, files: [markets/eu_common.md] }
+  - { match: ["hungary", "匈牙利"],     locale: hu, files: [markets/eu_common.md] }
+  - { match: ["romania", "罗马尼亚"],   locale: ro, files: [markets/eu_common.md] }
+  - { match: ["bulgaria", "保加利亚"],  locale: bg, files: [markets/eu_common.md] }
+  - { match: ["croatia", "克罗地亚"],   locale: hr, files: [markets/eu_common.md] }
+  - { match: ["slovakia", "斯洛伐克"],  locale: sk, files: [markets/eu_common.md] }
+  - { match: ["slovenia", "斯洛文尼亚"], locale: si, files: [markets/eu_common.md] }
+  - { match: ["lithuania", "立陶宛"],   locale: lt, files: [markets/eu_common.md] }
+  - { match: ["latvia", "拉脱维亚"],    locale: lv, files: [markets/eu_common.md] }
+  - { match: ["estonia", "爱沙尼亚"],   locale: ee, files: [markets/eu_common.md] }
+  - { match: ["luxembourg", "卢森堡"],  locale: lu, files: [markets/eu_common.md] }
+  - { match: ["malta", "马耳他"],      locale: mt, files: [markets/eu_common.md] }
+  - { match: ["cyprus", "塞浦路斯"],    locale: cy, files: [markets/eu_common.md] }
+  # 兜底：只说"欧盟/欧洲"没指定国家时，给通用包但**不指定地区码**
+  # （多国区域强行指定单一 locale 会让「他国站点」检测大面积误伤）
+  # 放在所有具体国家之后，确保"法国"先命中法国那条。
+  - match: ["eu", "europe", "european union", "欧盟", "欧洲"]
+    locale: ""
+    files:
+      - markets/eu_common.md
+
+  # ---- 有地区码、知识包待补的市场 ----
+  # 这些会用默认知识包，但引用校验仍按各自地区码执行。
+  # 显式列出来，是为了让「还没写知识包」这件事在配置里可见，
+  # 而不是靠回落到默认值来掩盖。
+  - match: ["japan", "日本"]
+    locale: jp
+    files: []
+  - match: ["singapore", "新加坡"]
+    locale: sg
+    files: []
+  - match: ["malaysia", "马来西亚"]
+    locale: my
+    files: []
+
+  # ---- 区域级知识包（无单一国家地区码）----
+  # locale 留空是**有意的**：东南亚是多国区域，没有单一的本地站点域名规则，
+  # 强行指定一个会让「他国站点」检测误伤。留空 + 运行时提示，比猜一个好。
+  - match: ["sea", "东南亚", "东盟", "asean"]
+    locale: ""
+    files:
+      - markets/sea_common.md
+
+default_market_files:
+  - markets/_default.md

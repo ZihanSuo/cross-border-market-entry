@@ -1,0 +1,141 @@
+{
+  "timestamp": "20260811_172453",
+  "model": "o4-mini",
+  "cases": [
+    {
+      "case_id": "herbeast_v3",
+      "recall": 1.0,
+      "hits": 3,
+      "total": 3,
+      "error": "",
+      "issues": [
+        {
+          "id": "v3-fake-domain",
+          "type": "假域名",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "v3-unfilled-template",
+          "type": "未填模板占位符",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "v3-statista-homepage",
+          "type": "研究机构首页当证据",
+          "detectable_by": "both",
+          "hit": true
+        }
+      ]
+    },
+    {
+      "case_id": "herbeast_v8",
+      "recall": 1.0,
+      "hits": 7,
+      "total": 7,
+      "error": "",
+      "issues": [
+        {
+          "id": "v8-truebotanicals-homepage",
+          "type": "裸域名首页当证据",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "v8-ravenbotanicals-homepage",
+          "type": "裸域名首页当证据",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "v8-biorius-authority",
+          "type": "证据级别不当（非官方源当 A 级）",
+          "detectable_by": "qa",
+          "hit": true
+        },
+        {
+          "id": "v8-absolute-wording",
+          "type": "绝对化用词",
+          "detectable_by": "qa",
+          "hit": true
+        },
+        {
+          "id": "v8-nealsyard-intl-site",
+          "type": "国际站冒充本地站",
+          "detectable_by": "tool",
+          "hit": true
+        },
+        {
+          "id": "v8-pai-intl-site",
+          "type": "国际站冒充本地站",
+          "detectable_by": "tool",
+          "hit": true
+        },
+        {
+          "id": "v8-aesop-body-path",
+          "type": "URL 路径与产品品类矛盾",
+          "detectable_by": "neither",
+          "hit": true
+        }
+      ]
+    },
+    {
+      "case_id": "flowerknows_v2",
+      "recall": 0.88,
+      "hits": 7,
+      "total": 8,
+      "error": "",
+      "issues": [
+        {
+          "id": "fk2-overclaim-thailand",
+          "type": "过度推断（brief 中不存在的事实）",
+          "detectable_by": "qa",
+          "hit": false
+        },
+        {
+          "id": "fk2-unsourced-number-mistine",
+          "type": "无来源数字（兜底措辞不豁免）",
+          "detectable_by": "tool",
+          "hit": true
+        },
+        {
+          "id": "fk2-unsourced-number-cathydoll",
+          "type": "无来源数字（兜底措辞不豁免）",
+          "detectable_by": "tool",
+          "hit": true
+        },
+        {
+          "id": "fk2-unsourced-number-srichand",
+          "type": "无来源数字（兜底措辞不豁免）",
+          "detectable_by": "tool",
+          "hit": true
+        },
+        {
+          "id": "fk2-social-profile-mistine",
+          "type": "社媒账号页当舆论证据",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "fk2-social-profile-cathydoll",
+          "type": "社媒账号页当舆论证据",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "fk2-social-profile-srichand",
+          "type": "社媒账号页当舆论证据",
+          "detectable_by": "both",
+          "hit": true
+        },
+        {
+          "id": "fk2-srichand-homepage-as-product",
+          "type": "品牌首页当商品页",
+          "detectable_by": "both",
+          "hit": true
+        }
+      ]
+    }
+  ]
+}

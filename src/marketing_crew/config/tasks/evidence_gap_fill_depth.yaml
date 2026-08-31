@@ -1,0 +1,50 @@
+name: evidence_gap_fill_depth_task
+agent: evidence_gap_filler
+output_file: outputs/evidence_gap_fill.md
+guardrail: search_effort,citation
+guardrail_max_retries: 2
+context:
+  - market_feasibility_depth_task
+include_global_knowledge: false
+knowledge_mode: registry
+description: |
+  这是可行性（Depth）之后的**第二轮桌面补证**。不是重写可行性。
+
+  {brief}
+
+  ## Depth V1
+
+  怎么搜仍由你决定。系统验收：真检索、新 URL、两角度、不伪造。
+  对仍开放的缺口，必须写清 **已试检索角度 ≥2**（态度/概念 vs 零售/品牌+渠道）。
+
+  ## 硬性前置
+
+  - 至少 3 次成功搜索、≥2 个不同查询词（代码审计，不看自述）。
+  - 上游已有 URL 不算新事实；引用须标注「（上游已有）」。
+  - 禁止假链；无果只能在真搜过后写。
+
+  ## 质量门槛
+
+  1. 每条采用的 URL 旁写可核对事实。
+  2. 两角度规则：态度/概念 vs 当地零售或品牌+渠道；首轮无果必须换角度。
+     英国案例优先试：Cult Beauty / Boots / Space NK / Lookfantastic / 竞品 .co.uk 商品页；
+     泰国案例优先试：KONVY / Shopee / Lazada / Beautrium；
+     德国案例优先试：MediaMarkt / Saturn / Otto / Idealo / Amazon.de **PDP 或品牌店**
+     （query 里写出零售商名或 site:amazon.de / site:mediamarkt.de；分类浏览页不够）。
+     **只搜 market report / Stiftung Warentest / regulation 不算第二角度**——
+     无果缺口必须再补一刀零售/标价向检索，并写进「已试检索角度」。
+  3. 不得把仍不足的命题升级成已证实结论。
+  4. 不做合规科普/开拓方案/竞品战卡。
+expected_output: |
+  开头一行：本报告目标市场：…；补证轮次：可行性后第二轮（Depth）
+
+  ## 从上游提取的证据缺口
+  ## 补证结果（逐条）
+  ### 缺口 <ID>
+  - 已试检索角度（≥2，列出实际 query）
+  - 新事实（事实 | URL | 级别）或「本轮检索无果」+ 卡点
+  - 更新后状态
+  - 不得推出的结论
+  ## 仍未关闭的缺口
+  ## 对下游开拓 / 竞品的用法
+  ## 参考文献

@@ -1,0 +1,70 @@
+name: competitor_analysis_depth_task
+agent: competitor_analyst_depth
+prompt_file: prompts/competitor_analyst.md
+output_file: outputs/competitor_battlecard.md
+# 先强制真 scrape，再价带/摘录地板，再引用（共享软上限见 _compose）
+guardrail: scrape_effort,artifact_competitor,citation
+guardrail_max_retries: 3
+context:
+  - market_feasibility_depth_task
+  - evidence_gap_fill_depth_task
+  - market_expansion_depth_task
+include_global_knowledge: false
+knowledge_mode: registry
+description: |
+  基于上游 Depth 研究，完成**可核对**竞品分析（Depth V1）。
+
+  {brief}
+
+  ## Depth V1 写作原则
+
+  1. Battlecard 正文**按你真正读到的页面来写**——某家证据厚就写厚，薄就写薄并标不足。
+     禁止为凑「每家段落一样长」而编。
+  2. **文末硬证据清单是地板**（价带行数 / 摘录 / 可证伪）；不是让你把全文变成只有表。
+  3. 每个商品页 URL 必须来自实际搜索/抓取，禁止凭记忆拼接路径（历史 404 教训）。
+
+  ## 第 0 步
+
+  开头：「本报告目标市场：…；本地货币：…」。份额/渠道线索中的地区名必须等于 market_scope。
+
+  ## 内容要求
+
+  1. 至少 3 家；品类对齐；优先上游深拆名单。
+  2. 每家尽量 2–3 个可比 SKU；**真实性优先于数量**。
+  3. ≥2 次 `scrape_page` 核对标价/名称；失败写明，禁止假装已核实。
+  4. 差异化挂钩 brief ≥2 条；≥1 条可证伪（缺口事实 + 打脸前提）。
+  5. 允许「与上游的分歧」表；标记不推翻。
+  6. 无 https 不写价格/份额数字；禁止首页/分类页冒充单品页。
+
+  ## 中度地板（artifact_check 扫硬证据清单）
+
+  - 价带点 ≥5 行：品牌 / **具体 SKU 名** / **单一标价或窄区间**（写成 `THB 299` 或 `฿299`，不要只写「各类型彩妆」）/ **单品页 URL**（禁止品牌官网首页）
+  - 摘录 ≥3 条：原话或页面可见信息 + URL
+  - 可证伪主张 ≥1（清单或差异化节）
+  - **必须**成功调用 `scrape_page` ≥2 次（代码审计；不配工具或 0 次抓取 = 地板失败）
+  - 禁止用「待补充 / TBD / 待确认」填价带表；没有就少写几行并在正文声明不足
+expected_output: |
+  开头一行：本报告目标市场：…；本地货币：…
+
+  ## 承接上游要点
+  ## 竞品选择说明
+  ## Battlecard（逐家；长短随证据，勿灌水；每家至少 1 个带单品 URL 的 SKU）
+  ## 对比矩阵（有几家写几家）
+  ## 价格带观察（数据不够就明说，不要硬编缺口）
+  ## 与上游的分歧
+  ## 差异化机会（≥1 条可证伪）
+  ## 商品页核实记录（必须对应真实 scrape，禁止「待确认」充数）
+  ## 参考文献
+
+  ## 硬证据清单（机械验收用）
+  ### 价带点
+  | 价位 | 品牌 | SKU | 商品页 URL | 来源（搜索/scrape） |
+  | THB 199 | Mistine | Soft Matte 01 | https://…/product/… | scrape |
+  （≥5 行；URL 必须是单品页不是官网首页；禁止「待补充」行）
+  ### 摘录
+  - 「…」 | URL
+  （≥3）
+  ### 可证伪主张
+  - 主张：…
+  - 打脸条件：若…则不成立
+  - 验证方法：…

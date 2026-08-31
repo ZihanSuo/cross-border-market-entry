@@ -1,0 +1,43 @@
+==============================================================================
+QA Benchmark 结果
+==============================================================================
+
+## herbeast_v3  (model=o4-mini)
+  总召回：3/3  (100%)
+  命中：
+    ✓ [假域名] v3-fake-domain  (匹配到「example.com」)
+    ✓ [未填模板占位符] v3-unfilled-template  (匹配到「N/A | N/A」)
+    ✓ [研究机构首页当证据] v3-statista-homepage  (匹配到「statista.com」)
+
+## herbeast_v8  (model=o4-mini)
+  总召回：7/7  (100%)
+    - 标注为「tool」的问题：2/2
+    - 标注为「qa」的问题：2/2
+    - 标注为「neither」的问题：1/1
+  命中：
+    ✓ [裸域名首页当证据] v8-truebotanicals-homepage  (匹配到「truebotanicals.com」)
+    ✓ [裸域名首页当证据] v8-ravenbotanicals-homepage  (匹配到「ravenbotanicals.com」)
+    ✓ [证据级别不当（非官方源当 A 级）] v8-biorius-authority  (匹配到「biorius.com」)
+    ✓ [绝对化用词] v8-absolute-wording  (匹配到「评价极高」)
+    ✓ [国际站冒充本地站] v8-nealsyard-intl-site  (匹配到「nealsyardremedies.com」)
+    ✓ [国际站冒充本地站] v8-pai-intl-site  (匹配到「paiskincare.com」)
+    ✓ [URL 路径与产品品类矛盾] v8-aesop-body-path  (匹配到「aesop.com」)
+
+## flowerknows_v2  (model=o4-mini)
+  总召回：7/8  (88%)
+    - 标注为「tool」的问题：3/3
+    - 标注为「qa」的问题：0/1
+  未命中：
+    ✗ [过度推断（brief 中不存在的事实）] fk2-overclaim-thailand
+  命中：
+    ✓ [无来源数字（兜底措辞不豁免）] fk2-unsourced-number-mistine  (匹配到「25%」)
+    ✓ [无来源数字（兜底措辞不豁免）] fk2-unsourced-number-cathydoll  (匹配到「18%」)
+    ✓ [无来源数字（兜底措辞不豁免）] fk2-unsourced-number-srichand  (匹配到「15%」)
+    ✓ [社媒账号页当舆论证据] fk2-social-profile-mistine  (匹配到「facebook.com」)
+    ✓ [社媒账号页当舆论证据] fk2-social-profile-cathydoll  (匹配到「instagram.com」)
+    ✓ [社媒账号页当舆论证据] fk2-social-profile-srichand  (匹配到「twitter.com」)
+    ✓ [品牌首页当商品页] fk2-srichand-homepage-as-product  (匹配到「srichand.com」)
+
+注意：命中判定是关键词匹配，是粗糙近似——QA 换个措辞描述同一问题会被判未命中。
+      这个数字适合同一套标注下的纵向对比，不宜当作绝对能力值。
+      建议人工扫一眼未命中列表，确认是真漏还是措辞不同。

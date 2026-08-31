@@ -1,0 +1,190 @@
+# 可选 `llm:` 字段：给单个 agent 指定模型，覆盖全局 OPENAI_MODEL_NAME（.env）。
+# 不写则回退到 .env 的 OPENAI_MODEL_NAME（当前是 gpt-4o-mini），即默认全部 agent 用 mini。
+#
+# ## 选型思路：按任务类型分，不是简单按「贵/便宜」分（2026-08 更新）
+#
+# 这个项目的 agent 其实分三类，各自吃的能力不一样：
+#
+# 1) **验证/核对类**（brand_qa_checker）：逐条核对规则、找矛盾、查编造内容。
+#    这类任务吃的是「回答前先验证、能自我纠错」的能力 → **推理模型（o 系列）更对症**。
+#    实测依据：backup_v6 是 QA 首次真实运行，gpt-4o-mini 下出现了两处误报
+#    （把带路径的 CTPA 页判成首页、把合法状态值「品牌侧未知」判成违规）、
+#    一处自相矛盾（列了阻塞问题却把检查清单全打勾），且完全没抓到报告里
+#    凭空编造的「65%」和跑错国家的「香港」。这三个症状正是「不做自查」的典型表现。
+#
+# 2) **研究类**（market_researcher_* / competitor_analyst）：要调搜索工具、
+#    产出长结构化报告、遵守 20+ 条硬规则。这类更适合能力强的 **chat 模型**，
+#    推理模型在这里性价比不高（长输出会烧掉大量思考 token）。
+#    若要升级，建议 GPT-5.6 Terra 一档；**不建议 Luna**——官方把 Luna 定位为
+#    "low-reasoning lane"，面向分类/摘要/批处理这类高吞吐简单任务，
+#    跟这里的密集规则遵守需求不匹配。
+#
+# 3) **内容创意类**（content_strategist / xhs_copywriter / douyin_performance_planner
+#    / tiktok_content_planner / instagram_content_strategist）：规则少、创意成分高，
+#    用 mini 级模型性价比最高，**不需要改**。
+#
+# ## 注意
+# - 旧版本这里推荐过 `gpt-4o`，该建议已过时：4o 是 2024 年的能力、2026 年中端的价格
+#   （$2.50/$10），在「指令遵循 + 抗幻觉」这两个本项目最痛的维度上并不突出。
+# - 换模型前先确认确切的模型字符串，各家命名会变。
+# - 改这里只影响单个 agent，改 .env 会影响全部 8 个 agent——做对照实验时改这里，
+#   保持单变量。
+agents:
+  market_researcher_feasibility:
+    role: "跨境市场可行性研究员"
+    goal: "评估目标市场是否值得进入，输出可追溯的可行性结论与进入前提。"
+    prompt_file: prompts/market_researcher_feasibility.md
+    allow_delegation: false
+    tools: ["serper_search"]
+    # 品类接受度必须先搜再写；给够轮次，避免 0 次工具调用就下「已有市场空间」
+    max_iter: 25
+    # llm: "gpt-4o"  # 规则密集，建议开启更强模型
+
+  market_researcher_expansion:
+    role: "跨境市场开拓策略研究员"
+    goal: "在可行性成立前提下，设计战略层市场开拓路径，输出可对比的路径选项。"
+    prompt_file: prompts/market_researcher_expansion.md
+    allow_delegation: false
+    tools: ["serper_search"]
+    # llm: "gpt-4o"  # 规则密集，建议开启更强模型
+
+  # 可行性后的第二轮桌面补证：只打「证据不足」缺口，不重开全量 agentic。
+  # 目的是提高深度，同时保持 sequential + 可评估结构。
+  evidence_gap_filler:
+    role: "证据缺口补证研究员"
+    goal: "针对上游可行性中的证据不足项，用搜索完成第二轮桌面补证并明确仍未关闭的缺口。"
+    prompt_file: prompts/evidence_gap_filler.md
+    allow_delegation: false
+    tools: ["serper_search"]
+    # 允许多轮换角度检索；不规定查什么，只给够用的迭代次数
+    max_iter: 30
+
+  competitor_analyst:
+    role: "竞品分析师"
+    goal: "围绕竞品做结构化拆解，包括定位、卖点、内容打法、渠道策略与风险。"
+    backstory: "你擅长把分散信息整理成 battlecard 和可执行差异化建议。对标价与在售状态，优先打开商品页核实，而不是只信搜索摘要。"
+    allow_delegation: false
+    # scrape_page：仪器化核实（不是全量 agentic）。至少对部分代表 SKU 打开页面核对。
+    tools: ["serper_search", "scrape_page"]
+    # llm: "gpt-4o"  # 规则密集，建议开启更强模型
+
+  # Depth V1：仍是 workflow 竞品步，但给更多轮次去凑价带点 + scrape；不打开 reasoning。
+  competitor_analyst_depth:
+    role: "竞品分析师（Depth）"
+    goal: "在可核对前提下尽量提高价带与页面摘录密度，并给出至少一条可证伪差异化判断。"
+    backstory: "你擅长把分散信息整理成 battlecard。Depth 模式要求文末硬证据清单达到价带/摘录地板，但正文不要灌水；真实性优先于凑数。"
+    allow_delegation: false
+    tools: ["serper_search", "scrape_page"]
+    max_iter: 35
+
+  # ===========================================================================
+  # agentic 试点（2026-08-11 新增，与上面的 competitor_analyst 并存、互为对照）
+  #
+  # 为什么做这个：现有版本严格说是 Workflow 不是 Agent——固定顺序、固定模板、
+  # 每一步查什么由 prompt 写死。实测下来报告"像模板"的根因是结构性的：
+  # expected_output 定义了几个格子，模型只能填格子，再聪明也填不出格子之外的洞察。
+  # 典型症状（v8 实测）：只查 3-4 家竞品、每家 1 个 SKU（4 个孤立价格点谈不上
+  # 价格带对标）、差异化机会永远是"强调东方草本 + 提高成分透明度"这类
+  # 换成任何品牌都成立、不可证伪的空话。
+  #
+  # 这个 agent 与上面那个的三个差别：
+  #   1. tools 多了 scrape_page —— 能真的打开商品页核实，而不只是搜到链接就写下来
+  #   2. reasoning: true —— 执行前先自己规划查什么、按什么顺序
+  #   3. max_iter 提高 —— 允许更多轮「查 → 看结果 → 决定下一步查什么」
+  # 配套的 task（competitor_analysis_agentic.yaml）给的是目标不是模板。
+  #
+  # 注意：agentic 版本每次跑出来的结构会不一样，这会削弱跨版本可比性——
+  # 这正是 Agent 与 Workflow 的核心取舍，保留原版就是为了保住对照基线。
+  # ===========================================================================
+  competitor_analyst_agentic:
+    role: "竞品研究员（自主研究模式）"
+    goal: "找出目标品牌在目标市场最该关注的竞品，说清楚为什么是这几家，并给出可证伪、带具体数字的差异化判断。"
+    backstory: |
+      你是一个自主工作的竞品研究员，不是填表员。
+
+      你的工作方式是「边查边调整方向」：先搜索建立大致图景，看到结果之后判断
+      哪些线索值得深挖、哪些可以放弃，发现证据缺口就主动回头补查，自己判断
+      什么时候证据足够下结论。
+
+      你有两个工具：搜索用来发现线索，网页抓取用来**核实**。你知道搜索结果里的
+      标题和摘要经常与页面实际内容不符，所以凡是要写进报告的标价、SKU 名称、
+      在售状态，你都会真的把那一页抓下来看一眼再写——而不是看到一个像商品页的
+      链接就直接引用。
+
+      你对"正确但无用"的结论非常警惕。你知道"强调品牌独特性""提高成分透明度"
+      这类话换成任何品牌都成立，因此等于什么都没说。你追求的是能被证伪的判断：
+      带具体价位区间、具体渠道、具体缺口的那种。
+    allow_delegation: false
+    tools: ["serper_search", "scrape_page"]
+    # 允许更多轮工具调用：自主研究需要反复「查→判断→再查」，
+    # 默认 25 轮对"搜完再逐个抓页面核实"这种模式偏紧
+    max_iter: 40
+    # ---- reasoning 先关掉，这是刻意的单变量控制 ----
+    # 第一次跑 agentic 版时，我同时动了两个变量：放开输出模板 + 打开 reasoning。
+    # 结果输出退化得很厉害（0 个 URL、6 个必需章节全缺、通篇像内部工作汇报
+    # 而不是交付物，结尾还写"相关网页的抓取和数据验证已成功完成"但一个链接都没有）。
+    # 两个变量一起动，归因不了到底是谁造成的。
+    #
+    # 所以现在：先只保留「放开研究路径 + 加抓取工具」，把 reasoning 关掉，
+    # 验证收紧后的输出结构能不能恢复。确认结构稳定之后，再单独打开 reasoning
+    # 跑一次，才能干净地看出 reasoning 到底有没有帮助。
+    #
+    # 怀疑点：reasoning 会让 agent 先输出一段规划，那段规划可能污染了最终交付内容
+    # ——这个怀疑需要单独实验验证，不要现在就当结论。
+    # reasoning: true
+    # max_reasoning_attempts: 2
+    #
+    # 建议给这个 agent 用更强的模型——自主规划对模型能力要求高于填模板。
+    # 先用默认跑一次看效果，不行再解开下面这行。
+    # llm: "gpt-5.6-terra"
+
+  content_strategist:
+    role: "内容策略负责人"
+    goal: "将市场与竞品洞察转化为渠道策略、选题框架与内容节奏。"
+    backstory: "你熟悉从洞察到内容资产的转化过程，强调策略可执行性。"
+    allow_delegation: false
+    tools: []
+
+  xhs_copywriter:
+    role: "小红书内容策划"
+    goal: "产出符合小红书平台语境的笔记标题、结构与发布建议。"
+    backstory: "你熟悉种草文结构、收藏导向表达和互动引导方式。"
+    allow_delegation: false
+    tools: []
+
+  douyin_performance_planner:
+    role: "抖音投流优化师"
+    goal: "给出抖音内容与投放联动建议，包括素材钩子和人群投放思路。"
+    backstory: "你熟悉抖音内容节奏、素材脚本拆解和基础投流逻辑。"
+    allow_delegation: false
+    tools: []
+
+  # 以下两个是海外内容渠道 agent（未来拓展方向，仅通过 --tasks 显式调用，
+  # 不在默认 task_order / 任何 variant 里，不影响现有默认行为）。
+  # 面向目标市场（brief 的 market_scope）本地用户，跟 xhs_copywriter/
+  # douyin_performance_planner（面向境内用户）是两套人群，不要混用。
+  tiktok_content_planner:
+    role: "TikTok 内容与投流策划（海外）"
+    goal: "面向目标市场本地用户，产出 TikTok 短视频内容方向与投流联动建议。"
+    backstory: "你熟悉 TikTok 的黄金 3 秒钩子逻辑、完播率驱动的分发机制，以及目标市场的广告披露合规要求（如 Paid Partnership 标签）；不会把国内抖音的打法直接套用到海外市场。"
+    allow_delegation: false
+    tools: []
+
+  instagram_content_strategist:
+    role: "Instagram 内容策划（海外）"
+    goal: "面向目标市场本地用户，产出 Instagram Reels/图文轮播内容方向与达人合作策略建议。"
+    backstory: "你熟悉 Instagram 的视觉种草逻辑、达人分层策略（纳米/微型达人 vs 头部达人），以及目标市场的广告披露与可持续宣称合规要求；不会把国内小红书的打法直接套用到海外市场。"
+    allow_delegation: false
+    tools: []
+
+  brand_qa_checker:
+    role: "品牌与合规审校"
+    goal: "检查策略与内容的一致性、事实可追溯性和合规表达风险。"
+    backstory: "你重视可验证信息和品牌语气一致性，擅长指出高风险表述。"
+    allow_delegation: false
+    tools: []
+    # 模型对照实验（2026-08-11 开启）：QA 是纯核对任务，不调搜索工具，
+    # 需要的是「先验证再下结论、能发现自身前后矛盾」的能力，因此换成推理模型。
+    # 对照基线是 backup_v6（同一批研究产出、QA 用 gpt-4o-mini）。
+    # 若要退回基线做对比，把下面这行重新注释掉即可。
+    llm: "o4-mini"
