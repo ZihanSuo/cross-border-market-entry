@@ -280,6 +280,7 @@ def build_marketing_crew(
             knowledge_dir=paths["knowledge_dir"],
             brief_block=brief_block,
             market_scope=brief.market_scope,
+            retrieval_query="\n".join([brief.goals, *brief.focus_areas]).strip(),
         )
         # guardrail：让 workflow 具备 agent 式的自我修正循环。
         # task yaml 里写 `guardrail: citation` 即可挂上——机械校验发现严重问题时，

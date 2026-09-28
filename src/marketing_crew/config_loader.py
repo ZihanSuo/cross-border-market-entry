@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -298,6 +299,18 @@ def resolve_market(knowledge_dir: Path, market_scope: str) -> MarketResolution:
     return result
 
 
+def _resolve_registry_split(knowledge_dir: Path, market_scope: str) -> tuple[list[str], list[str]]:
+    """返回 (核心文件, 市场文件)。检索模式下前者整份加载，后者参与检索。"""
+    registry = _load_knowledge_registry(knowledge_dir)
+    if not registry:
+        return [], []
+    core = [f for f in (registry.get("core_files") or []) if isinstance(f, str)]
+    market = [
+        f for f in resolve_market(knowledge_dir, market_scope).market_files if f not in core
+    ]
+    return core, market
+
+
 def _resolve_registry_knowledge_files(knowledge_dir: Path, market_scope: str) -> list[str]:
     registry = _load_knowledge_registry(knowledge_dir)
     if not registry:
@@ -321,6 +334,7 @@ def build_task_description(
     knowledge_dir: Path,
     brief_block: str,
     market_scope: str = "",
+    retrieval_query: str = "",
 ) -> str:
     parts: list[str] = []
 
@@ -335,6 +349,31 @@ def build_task_description(
     include_global = bool(spec.get("include_global_knowledge", True))
     extra_files = list(spec.get("knowledge_files") or [])
     knowledge_mode = str(spec.get("knowledge_mode", "")).strip().lower()
+    if knowledge_mode == "registry" and os.environ.get("KNOWLEDGE_RETRIEVAL") == "1":
+        knowledge_mode = "retrieval"
+
+    if knowledge_mode == "retrieval":
+        # 检索模式：registry 圈定市场范围，核心规则整份加载，市场知识包按段检索 top-k。
+        # 详见 knowledge_retrieval.py 顶部说明。
+        from .knowledge_retrieval import DEFAULT_TOP_K, build_retrieved_knowledge
+
+        core_files, market_files = _resolve_registry_split(knowledge_dir, market_scope)
+        # 查询改写：用 brief 的目标和重点关注领域当查询。整段任务模板 + 整份 brief 当查询时，
+        # 几千个词几乎和每个知识块都重合，得分挤在一起，排序接近噪声（2026-09-28 德国对照实验）。
+        query = retrieval_query or (
+            description.replace("{brief}", brief_block) if description else brief_block
+        )
+        knowledge_text = build_retrieved_knowledge(
+            knowledge_dir,
+            always_files=core_files + [f for f in extra_files if f not in core_files],
+            candidate_files=market_files,
+            query=query,
+            top_k=int(spec.get("knowledge_top_k", DEFAULT_TOP_K)),
+        )
+        if knowledge_text:
+            parts.append("补充知识与规则（优先遵循）：\n" + knowledge_text)
+        return "\n\n".join(part for part in parts if part.strip()).strip()
+
     if knowledge_mode == "registry":
         for file_path in _resolve_registry_knowledge_files(knowledge_dir, market_scope):
             if file_path not in extra_files:
